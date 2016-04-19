@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "MS5837.h"
 #include <SPI.h>
-#include <Ethernet.h>
+#include <UIPEthernet.h>
 
 //Ethernet stuff
 
@@ -167,7 +167,7 @@ void setup_ethernet()
     // initialize the ethernet device not using DHCP:
     Ethernet.begin(mac, ip, gateway, subnet);
   }*/
-  
+                                                                                                                                                            
   Ethernet.begin(mac, ip, gateway, subnet);
   
   // print your local IP address:
