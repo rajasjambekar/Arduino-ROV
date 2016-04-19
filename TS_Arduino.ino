@@ -1,6 +1,6 @@
 #include<Servo.h>
 #include <Wire.h>
-#include <SparkFun_MS5803_I2C.h>
+#include "MS5837.h"
 #include <SPI.h>
 #include <Ethernet.h>
 
@@ -21,8 +21,9 @@ const int LED_ARRAY_ONE = 53;                              // - Code: 51
 const int LED_ARRAY_TWO = 49;                              // - Code: 52
 
 //pressure sensor stuff                                 
-//currently pressure sensor code is for MS5803-14BA sensor
-MS5803 sensor(ADDRESS_HIGH);                              //- Code: 31
+//currently pressure sensor code is for MS5837-30BA sensor
+MS5837 sensor;                             //- Code: 31
+const int fluid_density = 997;
 
 //Thermistor stuff                                      - Code: 21
 #define THERMISTORPIN A0             //Thermistor analog pin 
@@ -145,8 +146,7 @@ void setup() {
   analogReference(EXTERNAL);
 
   //setup pressure sensor
-  sensor.reset();
-  sensor.begin();
+  setup_pressure_sensor();
 
   //setup LED pins
   pinMode(LED_ARRAY_ONE,OUTPUT);
@@ -449,16 +449,17 @@ float read_thermistor()
   ///////////////////////////////// delay - 1000. substitute with timer
 }
 
-//read absolute pressure value
-double read_pressure()
+//read absolute pressure value and return depth
+double read_depth()
 {
   double pressure_abs;
   // Read pressure from the sensor in mbar.
-  pressure_abs = sensor.getPressure(ADC_512);
+  sensor.read();
+  double depth = sensor.depth(); 
   //Serial.println("Abs Pressure: ");
   //Serial.println(pressure_abs);
   //Serial.println("mbar");
-  return pressure_abs;
+  return depth;
 }
 
 //turn led headlamps on off
@@ -490,11 +491,11 @@ void decode_client_message(int code,int val)
   }
   else if(code>=3000 && code<4000)    //pressure sensor code
   {
-    double pressure_reading;
+    double depth_reading;
     if(code/100 == CODE_PS1)                //code to read pressure value
     {
-      pressure_reading = read_pressure();   //call function to get pressure reading from pressure sensor
-      put_tcp_message(code, pressure_reading);    //send reading over tcp
+      depth_reading = read_depth();   //call function to get depth reading from pressure sensor
+      put_tcp_message(code, depth_reading);    //send reading over tcp
     }
   }
   else if(code>=4000 && code<5000)    //dc motor control code
