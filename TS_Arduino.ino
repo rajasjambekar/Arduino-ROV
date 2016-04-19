@@ -183,6 +183,14 @@ void setup_ethernet()
   server.begin();
 }
 
+//setup pressure sensor, i2c wire and fluid density
+void setup_pressure_sensor() 
+{
+  Wire.begin();
+  sensor.init();
+  sensor.setFluidDensity(fluid_density);    //kg/m^3 (freshwater, 1029 for seawater)
+}
+
 void setup_camera_servo()
 {
   //attach each camera servo to its pwm pin
