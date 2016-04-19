@@ -345,56 +345,56 @@ void motor_control(int code, int val)
   {
     analogWrite(MOTOR_RARM_PAN_EN_PIN, val);
     set_motor_val(MOTOR_RARM_LEFT_PIN, MOTOR_RARM_RIGHT_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RARM_PAN_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RARM_PAN_EN_PIN, 0);
   }
   //robotic arm fw/bw movement
   if(code/100==CODE_DCM2)
   {
     analogWrite(MOTOR_RARM_FWBW_EN_PIN, val);
     set_motor_val(MOTOR_RARM_FW_PIN, MOTOR_RARM_BW_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RARM_FWBW_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RARM_FWBW_EN_PIN, 0);
   }
   //robotic arm up/down movement
   if(code/100==CODE_DCM3)
   {
     analogWrite(MOTOR_RARM_UPDN_EN_PIN, val);
     set_motor_val(MOTOR_RARM_UP_PIN, MOTOR_RARM_DN_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RARM_UPDN_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RARM_UPDN_EN_PIN, 0);
   }
   //robotic gripper 360degree rotation
   if(code/100==CODE_DCM4)
   {
     analogWrite(MOTOR_RGRIPPER_360_EN_PIN, val);
     set_motor_val(MOTOR_RGRIPPER_360ACLK_PIN, MOTOR_RGRIPPER_360CLK_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RGRIPPER_360_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RGRIPPER_360_EN_PIN, 0);
   }
   //robotic gripper 180degree up/down
   if(code/100==CODE_DCM5)
   {
     analogWrite(MOTOR_RGRIPPER_180_EN_PIN, val);
     set_motor_val(MOTOR_RGRIPPER_180UP_PIN, MOTOR_RGRIPPER_180DN_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RGRIPPER_180_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RGRIPPER_180_EN_PIN, 0);
   }
   //robotic gripper open/close
   if(code/100==CODE_DCM6)
   {
     analogWrite(MOTOR_RGRIPPER_OPCL_EN_PIN, val);
     set_motor_val(MOTOR_RGRIPPER_OPEN_PIN, MOTOR_RGRIPPER_CLOSE_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RGRIPPER_OPCL_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RGRIPPER_OPCL_EN_PIN, 0);
   }
   //robotic claw open/close
   if(code/100==CODE_DCM7)
   {
     analogWrite(MOTOR_RCLAW_OPCL_EN_PIN, val);
     set_motor_val(MOTOR_RCLAW_OPEN_PIN, MOTOR_RCLAW_CLOSE_PIN, code%100);
-    delay(motorRunTime);
-    analogWrite(MOTOR_RCLAW_OPCL_EN_PIN, 0);
+    //delay(motorRunTime);
+    //analogWrite(MOTOR_RCLAW_OPCL_EN_PIN, 0);
   }
 }
 
