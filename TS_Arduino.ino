@@ -45,59 +45,59 @@ Servo CAM_2_1;  //CAMERA 2 SERVO PAN
 Servo CAM_2_2;  //CAMERA 2 SERVO TILT
 
 //thruster pin declaration
-const int THRUSTER_ONE_PIN = 8;
-const int THRUSTER_TWO_PIN = 9; 
-const int THRUSTER_THREE_PIN = 10; 
-const int THRUSTER_FOUR_PIN = 11; 
-const int THRUSTER_FIVE_PIN = 12; 
-const int THRUSTER_SIX_PIN = 13; 
+const int THRUSTER_ONE_PIN = 23;
+const int THRUSTER_TWO_PIN = 25; 
+const int THRUSTER_THREE_PIN = 27; 
+const int THRUSTER_FOUR_PIN = 29; 
+const int THRUSTER_FIVE_PIN = 31; 
+const int THRUSTER_SIX_PIN = 33; 
 
 //motor pin declaration. Motor driver used is L298 which takes one EN pin and two input pins IN1 and IN2
 //Input pin high/low combination decides direction
   //Robotic arm pan motor
-const int MOTOR_RARM_PAN_EN_PIN = 23;
+const int MOTOR_RARM_PAN_EN_PIN = 2;
 const int MOTOR_RARM_LEFT_PIN = 22;
 const int MOTOR_RARM_RIGHT_PIN = 24;
 
   //robotic arm forward/backward motor
-const int MOTOR_RARM_FWBW_EN_PIN = 25;
+const int MOTOR_RARM_FWBW_EN_PIN = 3;
 const int MOTOR_RARM_FW_PIN = 26; 
 const int MOTOR_RARM_BW_PIN = 28; 
 
   //robotic arm up/down motor
-const int MOTOR_RARM_UPDN_EN_PIN = 27;
+const int MOTOR_RARM_UPDN_EN_PIN = 4;
 const int MOTOR_RARM_UP_PIN = 30; 
 const int MOTOR_RARM_DN_PIN = 32; 
 
   //robotic gripper 360a-clkwise/clkwise motor
-const int MOTOR_RGRIPPER_360_EN_PIN = 29;
+const int MOTOR_RGRIPPER_360_EN_PIN = 5;
 const int MOTOR_RGRIPPER_360ACLK_PIN = 34; 
 const int MOTOR_RGRIPPER_360CLK_PIN = 36; 
 
   //robotic gripper 180up/down motor
-const int MOTOR_RGRIPPER_180_EN_PIN = 31;
+const int MOTOR_RGRIPPER_180_EN_PIN = 6;
 const int MOTOR_RGRIPPER_180UP_PIN = 38; 
 const int MOTOR_RGRIPPER_180DN_PIN = 40; 
 
   //robotic gripper open/close motor
-const int MOTOR_RGRIPPER_OPCL_EN_PIN = 33;
+const int MOTOR_RGRIPPER_OPCL_EN_PIN = 7;
 const int MOTOR_RGRIPPER_OPEN_PIN = 42; 
 const int MOTOR_RGRIPPER_CLOSE_PIN = 44; 
 
   //robotic claw open/close motor
-const int MOTOR_RCLAW_OPCL_EN_PIN = 35;  
+const int MOTOR_RCLAW_OPCL_EN_PIN = 8;  
 const int MOTOR_RCLAW_OPEN_PIN = 46; 
 const int MOTOR_RCLAW_CLOSE_PIN = 48; 
 
 //camera servo pin declaration
-const int C1S1_PIN = 37;  //CAMERA 1 SERVO PAN
-const int C1S2_PIN = 39;  //CAMERA 1 SERVO TILT
-const int C2S1_PIN = 41;  //CAMERA 2 SERVO PAN
-const int C2S2_PIN = 43;  //CAMERA 2 SERVO TILT
+const int C1S1_PIN = 35;  //CAMERA 1 SERVO PAN
+const int C1S2_PIN = 37;  //CAMERA 1 SERVO TILT
+const int C2S1_PIN = 39;  //CAMERA 2 SERVO PAN
+const int C2S2_PIN = 41;  //CAMERA 2 SERVO TILT
 
 //LED
-const int LED_ARRAY_ONE = 45;                              // - Code: 51
-const int LED_ARRAY_TWO = 47;                              // - Code: 52
+const int LED_ARRAY_ONE = 43;                              // - Code: 51
+const int LED_ARRAY_TWO = 45;                              // - Code: 52
 
 //all codes for systems
 const int CODE_TH1 = 11;  //THRUSTER 1
