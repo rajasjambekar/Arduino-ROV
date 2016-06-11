@@ -3,6 +3,7 @@
 #include "MS5837.h"
 #include <SPI.h>
 #include <UIPEthernet.h>
+#include <TimerOne.h>
 
 //Ethernet stuff
 
@@ -46,8 +47,8 @@ Servo CAM_2_2;  //CAMERA 2 SERVO TILT
 
 //thruster pin declaration
 const int THRUSTER_ONE_PIN = 23;
-const int THRUSTER_TWO_PIN = 25; 
-const int THRUSTER_THREE_PIN = 27; 
+const int THRUSTER_TWO_PIN = 27;  //replaces next
+const int THRUSTER_THREE_PIN = 25; //replaces prev
 const int THRUSTER_FOUR_PIN = 29; 
 const int THRUSTER_FIVE_PIN = 31; 
 const int THRUSTER_SIX_PIN = 33; 
@@ -100,6 +101,7 @@ const int LED_ARRAY_ONE = 43;                              // - Code: 51
 const int LED_ARRAY_TWO = 45;                              // - Code: 52
 
 //all codes for systems
+const int CODE_THE = 1999; //THRUSTER ENABLE
 const int CODE_TH1 = 11;  //THRUSTER 1
 const int CODE_TH2 = 12;  //THRUSTER 2
 const int CODE_TH3 = 13;  //THRUSTER 3
@@ -122,14 +124,19 @@ const int CODE_C1S2 = 62;  //CAMERA 1 SERVO TILT
 const int CODE_C2S1 = 63;  //CAMERA 2 SERVO PAN
 const int CODE_C2S2 = 64;  //CAMERA 2 SERVO TILT
 
-//temperature/pressure sensor value send timer
+//temperature/pressure sensor, accelerometer, ping value send timer
 unsigned long data_transfer_timer;
+unsigned long ping_timer;
+unsigned long acc_timer;
 const long data_transfer_time_gap = 1000;
 
 //emergency shutoff timer
 boolean stopped_bit = false;
 unsigned long shutoff_timer;
 const long shutoff_time_gap = 5000;
+
+//thruster enable flag
+boolean th_enable = false;
 
 void setup() {
   Serial.begin(9600);
@@ -457,16 +464,22 @@ float read_thermistor()
   ///////////////////////////////// delay - 1000. substitute with timer
 }
 
-//read absolute pressure value and return depth
+//read absolute pressure value
+double read_pressure()
+{
+  double pressure_abs;
+  sensor.read();
+  // Read pressure from the sensor in mbar.
+  double pressure = sensor.pressure();  //mbar Abs Pressure
+  return pressure;
+}
+
+//read depth
 double read_depth()
 {
   double pressure_abs;
-  // Read pressure from the sensor in mbar.
   sensor.read();
-  double depth = sensor.depth(); 
-  //Serial.println("Abs Pressure: ");
-  //Serial.println(pressure_abs);
-  //Serial.println("mbar");
+  double depth = sensor.depth(); //depth in meters
   return depth;
 }
 
@@ -479,10 +492,31 @@ void led_switch(int code,int val)
     digitalWrite(LED_ARRAY_TWO,val);
 }
 
+//ping the controller to show network connection
+void ping(int code, int val)
+{
+  put_tcp_message(code, val);
+}
+
 //decode code and value
 void decode_client_message(int code,int val)
 {
-  if(code>=1000 && code<2000)     //thruster code
+  if(code==1999)
+  {
+    if(val==1)                        //thruster enable value
+    {
+      Serial.println();
+      Serial.print("Thrusters Enabled");
+      th_enable = true;
+    }
+    else                              //default any other value to thruster disable
+    {
+      Serial.println();
+      Serial.print("Thrusters Disabled");
+      th_enable = false;
+    }
+  }
+  else if(code>=1000 && code<2000 && th_enable)     //thruster code. check thruster enable flag
   {
     thruster_change_speed(code/100,val);    //change speed of primary thruster
     if(code%100 != 0)                       //check if coupled thruster present
@@ -499,11 +533,11 @@ void decode_client_message(int code,int val)
   }
   else if(code>=3000 && code<4000)    //pressure sensor code
   {
-    double depth_reading;
+    double pressure_reading;
     if(code/100 == CODE_PS1)                //code to read pressure value
     {
-      depth_reading = read_depth();   //call function to get depth reading from pressure sensor
-      put_tcp_message(code, depth_reading);    //send reading over tcp
+      pressure_reading = read_pressure();   //call function to get reading from pressure sensor
+      put_tcp_message(code, pressure_reading);    //send reading over tcp
     }
   }
   else if(code>=4000 && code<5000)    //dc motor control code
@@ -545,15 +579,20 @@ int get_tcp_message(EthernetClient client)
 //value is the data from the sensor being sent
 void put_tcp_message(int code, double data)
 {
-  String message = "s" + String(code) + ":" + String(data) + "e";   //generate message string
+  String message = "s" + String(code) + ":" + String(data);   //generate message string
   int len = message.length();
   char arr[len];
   message.toCharArray(arr,len);       //convert message to char array
+  Serial.println();
+  Serial.print("Sending: ");
   for(int i=0;i<len;i++)              //send message over tcp
   {
+    Serial.print(arr[i]);
     server.write(arr[i]);
     delay(1);
   }
+  server.write("e");
+  Serial.print("e");
 }
 
 //check for incoming message
@@ -579,7 +618,8 @@ void loop() {
     //force send temperature and pressure data to controller
     decode_client_message(2100,0);  //read temperature value and send over tcp
     decode_client_message(3100,0);  //read pressure value and send over tcp
-    Serial.print("in");
+    Serial.println();
+    Serial.print("sensor read");
     data_transfer_timer = millis();
   }
   else if(!client && !stopped_bit && (millis()-shutoff_timer)>=shutoff_time_gap)  //no data available for read for more than shutoff_time_gap
@@ -594,4 +634,12 @@ void loop() {
     stopped_bit = true;
     //client.stop();
   }
+  if(millis()-ping_timer>data_transfer_time_gap) 
+  {
+    Serial.println();
+    Serial.print("ping");
+    decode_client_message(9999,0);  //ping the controller
+    ping_timer = millis();
+  }
 }
+
