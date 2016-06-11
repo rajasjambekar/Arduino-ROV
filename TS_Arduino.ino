@@ -31,6 +31,18 @@ const int fluid_density = 997;
 #define SERIESRESISTOR 10000         //the value of the 'other' resistor
 int samples[NUMSAMPLES];
 
+//MPU9250 Stuff
+#define    MPU9250_ADDRESS            0x68
+#define    MAG_ADDRESS                0x0C
+#define    GYRO_FULL_SCALE_250_DPS    0x00  
+#define    GYRO_FULL_SCALE_500_DPS    0x08
+#define    GYRO_FULL_SCALE_1000_DPS   0x10
+#define    GYRO_FULL_SCALE_2000_DPS   0x18
+#define    ACC_FULL_SCALE_2_G        0x00  
+#define    ACC_FULL_SCALE_4_G        0x08
+#define    ACC_FULL_SCALE_8_G        0x10
+#define    ACC_FULL_SCALE_16_G       0x18
+
 //thruster values between 1100 and 1900
 Servo THRUSTER_ONE;   //Forward-backward thruster 1    - Code: 10
 Servo THRUSTER_TWO;   //Forward-backward thruster 2    - Code: 11
@@ -138,6 +150,12 @@ const long shutoff_time_gap = 5000;
 //thruster enable flag
 boolean th_enable = false;
 
+//MPU9250
+const int max_acc_val = 10000;
+const int min_acc_val = -10000;
+volatile bool intFlag = false;
+int16_t ax, ay, az;
+
 void setup() {
   Serial.begin(9600);
   //setup servo pins for all thrusters
@@ -196,6 +214,25 @@ void setup_pressure_sensor()
   Wire.begin();
   sensor.init();
   sensor.setFluidDensity(fluid_density);    //kg/m^3 (freshwater, 1029 for seawater)
+}
+
+// Initializations
+void setup_mpu9250()
+{
+  // Set accelerometers low pass filter at 5Hz
+  I2CwriteByte(MPU9250_ADDRESS,29,0x06);
+  // Set gyroscope low pass filter at 5Hz
+  I2CwriteByte(MPU9250_ADDRESS,26,0x06);
+ 
+  // Configure gyroscope range
+  I2CwriteByte(MPU9250_ADDRESS,27,GYRO_FULL_SCALE_1000_DPS);
+  // Configure accelerometers range
+  I2CwriteByte(MPU9250_ADDRESS,28,ACC_FULL_SCALE_4_G);
+  // Set by pass mode for the magnetometers
+  I2CwriteByte(MPU9250_ADDRESS,0x37,0x02);
+  
+  // Request continuous magnetometer measurements in 16 bits
+  I2CwriteByte(MAG_ADDRESS,0x0A,0x16);
 }
 
 void setup_camera_servo()
@@ -483,6 +520,58 @@ double read_depth()
   return depth;
 }
 
+// This function read Nbytes bytes from I2C device at address Address. 
+// Put read bytes starting at register Register in the Data array. 
+void I2Cread(uint8_t Address, uint8_t Register, uint8_t Nbytes, uint8_t* Data)
+{
+  // Set register address
+  Wire.beginTransmission(Address);
+  Wire.write(Register);
+  Wire.endTransmission();
+  
+  // Read Nbytes
+  Wire.requestFrom(Address, Nbytes); 
+  uint8_t index=0;
+  while (Wire.available())
+    Data[index++]=Wire.read();
+}
+
+// Write a byte (Data) in device (Address) at register (Register)
+void I2CwriteByte(uint8_t Address, uint8_t Register, uint8_t Data)
+{
+  // Set register address
+  Wire.beginTransmission(Address);
+  Wire.write(Register);
+  Wire.write(Data);
+  Wire.endTransmission();
+}
+
+int get_angle(int16_t val) 
+{
+  int angle = map(val, -8500, 8500, 0, 50);
+  angle = map(angle, 0, 50, 0, 180);
+  return angle;
+}
+
+//reads value from mpu9250 and stores in global variable
+//only accelerometer values used
+void read_mpu9250()
+{
+  // Read accelerometer and gyroscope
+  uint8_t Buf[14];
+  I2Cread(MPU9250_ADDRESS,0x3B,14,Buf);
+  
+  // Create 16 bits values from 8 bits data
+  // Accelerometer
+  ax =-(Buf[0]<<8 | Buf[1]);
+  ay =-(Buf[2]<<8 | Buf[3]);
+  az = Buf[4]<<8 | Buf[5];
+
+  ax = get_angle(ax);
+  ay = get_angle(ay);
+  az = get_angle(az);
+}
+
 //turn led headlamps on off
 void led_switch(int code,int val)
 {
@@ -554,6 +643,20 @@ void decode_client_message(int code,int val)
   {
     camera_change_angle(code/100, val);    //control camera pan/tilt
   }
+  else if(code>=8000 && code<9000)        //mpu9250
+  {
+    if(code==8000)                  //accelerometer
+    {
+      read_mpu9250();
+      put_tcp_message(8001, ax);    //send ax over tcp
+      put_tcp_message(8002, ay);    //send ay over tcp
+      put_tcp_message(8003, az);    //send az over tcp
+    }
+  }
+  else if(code==9999)    //ping code
+  {
+    ping(code, val);
+  }
 }
 
 //reads tcp buffer
@@ -613,6 +716,16 @@ void loop() {
     stopped_bit = false;
     shutoff_timer = millis();
   }
+  
+  //transmit accelerometer values
+  if(millis()-acc_timer>data_transfer_time_gap*1.5) 
+  {
+    Serial.println();
+    Serial.print("ACC");
+    decode_client_message(8000,0);  //ping the controller
+    acc_timer = millis();
+  }
+  
   if(!stopped_bit && (millis()-data_transfer_timer)>data_transfer_time_gap)    //co-ordinate sending of pressure and temperature values when no data is available for read
   {
     //force send temperature and pressure data to controller
